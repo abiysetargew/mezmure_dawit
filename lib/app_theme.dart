@@ -33,13 +33,13 @@ class AppTheme {
         outlineVariant: _warmWhite.withValues(alpha: 0.05),
         error: const Color(0xFFCF6679),
       ),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: _darkBg,
         foregroundColor: _warmWhite,
         elevation: 0,
         centerTitle: false,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: 'Georgia',
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -63,7 +63,7 @@ class AppTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return TextStyle(
+            return const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: _gold,
@@ -77,7 +77,7 @@ class AppTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: _gold, size: 26);
+            return const IconThemeData(color: _gold, size: 26);
           }
           return IconThemeData(
               color: _warmWhite.withValues(alpha: 0.4), size: 26);
@@ -104,7 +104,7 @@ class AppTheme {
         thickness: 1,
       ),
       textTheme: TextTheme(
-        displayLarge: TextStyle(
+        displayLarge: const TextStyle(
           fontFamily: 'Georgia',
           fontSize: 44,
           fontWeight: FontWeight.w800,
@@ -112,33 +112,33 @@ class AppTheme {
           letterSpacing: 0.3,
           height: 1.1,
         ),
-        displayMedium: TextStyle(
+        displayMedium: const TextStyle(
           fontFamily: 'Georgia',
           fontSize: 36,
           fontWeight: FontWeight.w800,
           color: _warmWhite,
           letterSpacing: 0.2,
         ),
-        headlineLarge: TextStyle(
+        headlineLarge: const TextStyle(
           fontFamily: 'Georgia',
           fontSize: 28,
           fontWeight: FontWeight.w700,
           color: _warmWhite,
           letterSpacing: 0.2,
         ),
-        headlineMedium: TextStyle(
+        headlineMedium: const TextStyle(
           fontFamily: 'Georgia',
           fontSize: 22,
           fontWeight: FontWeight.w600,
           color: _warmWhite,
         ),
-        titleLarge: TextStyle(
+        titleLarge: const TextStyle(
           fontSize: 17,
           fontWeight: FontWeight.w700,
           color: _warmWhite,
           letterSpacing: 0.2,
         ),
-        titleMedium: TextStyle(
+        titleMedium: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           color: _warmWhite,
@@ -154,7 +154,7 @@ class AppTheme {
           fontSize: 14,
           color: _warmWhite.withValues(alpha: 0.6),
         ),
-        labelLarge: TextStyle(
+        labelLarge: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
           color: _gold,
@@ -193,13 +193,13 @@ class AppTheme {
         outlineVariant: _burgundy.withValues(alpha: 0.06),
         error: const Color(0xFFB00020),
       ),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: _parchment,
         foregroundColor: _burgundyDark,
         elevation: 0,
         centerTitle: false,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           fontFamily: 'Georgia',
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -222,7 +222,7 @@ class AppTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return TextStyle(
+            return const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: _burgundy,
@@ -236,7 +236,7 @@ class AppTheme {
         }),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: _burgundy, size: 26);
+            return const IconThemeData(color: _burgundy, size: 26);
           }
           return IconThemeData(
               color: _burgundy.withValues(alpha: 0.4), size: 26);
@@ -263,7 +263,7 @@ class AppTheme {
         thickness: 1,
       ),
       textTheme: TextTheme(
-        displayLarge: TextStyle(
+        displayLarge: const TextStyle(
           fontFamily: 'Georgia',
           fontSize: 44,
           fontWeight: FontWeight.w800,
@@ -271,33 +271,33 @@ class AppTheme {
           letterSpacing: 0.3,
           height: 1.1,
         ),
-        displayMedium: TextStyle(
+        displayMedium: const TextStyle(
           fontFamily: 'Georgia',
           fontSize: 36,
           fontWeight: FontWeight.w800,
           color: _burgundyDark,
           letterSpacing: 0.2,
         ),
-        headlineLarge: TextStyle(
+        headlineLarge: const TextStyle(
           fontFamily: 'Georgia',
           fontSize: 28,
           fontWeight: FontWeight.w700,
           color: _burgundyDark,
           letterSpacing: 0.2,
         ),
-        headlineMedium: TextStyle(
+        headlineMedium: const TextStyle(
           fontFamily: 'Georgia',
           fontSize: 22,
           fontWeight: FontWeight.w600,
           color: _burgundyDark,
         ),
-        titleLarge: TextStyle(
+        titleLarge: const TextStyle(
           fontSize: 17,
           fontWeight: FontWeight.w700,
           color: _burgundyDark,
           letterSpacing: 0.2,
         ),
-        titleMedium: TextStyle(
+        titleMedium: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
           color: _burgundyDark,
@@ -313,7 +313,7 @@ class AppTheme {
           fontSize: 14,
           color: _burgundy.withValues(alpha: 0.6),
         ),
-        labelLarge: TextStyle(
+        labelLarge: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,
           color: _burgundy,

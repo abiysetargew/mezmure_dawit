@@ -59,12 +59,12 @@ flutter test --name="smoke"              # Run tests matching a pattern
 #### Naming Conventions
 - **Classes/Types:** `PascalCase` (e.g., `PsalmRepository`, `ReadingSanctuary`)
 - **Variables/Methods:** `camelCase` (e.g., `allPsalms`, `loadPsalms()`)
-- **Private members:** Leading `_` (e.g., `_idx`, `_generateMissingData()`)
+- **Private members:** Leading `_` (e.g., `_idx`, `_verseAdMilestone`)
 - **Constants:** `camelCase` or `kebab-case` in ValueNotifier names (current project uses `camelCase`)
 - **Files:** `snake_case.dart`
 
 #### Error Handling
-- Use `try/catch` with specific handling; avoid bare `catch (_)` except where errors are intentionally ignored (e.g., `loadPsalms()` silently falls back to empty data)
+- Use `try/catch` with specific handling; avoid bare `catch (_)` except where errors are intentionally ignored. `PsalmRepository.loadPsalms()` records failures in `PsalmRepository.loadError` and the app shows a data-error screen instead of fabricating content.
 - Wrap async I/O in try/catch when failure is recoverable
 - Use ` ScaffoldMessenger.of(context).showSnackBar(...)` for user-facing error messages
 
@@ -94,8 +94,10 @@ flutter test --name="smoke"              # Run tests matching a pattern
 lib/
   main.dart          # App entry, routing, screens, AppSettings
   psalm_data.dart    # Data models (Psalm, Verse), repository, utilities
-  ad_service.dart    # AdMob initialization and ad loading utilities
-  ad_banner_widget.dart # Reusable banner ad widget for Settings/About
+  ad_service.dart    # Conditional export: ad_service_stub.dart (web/test) or ad_service_mobile.dart (io)
+  ad_service_mobile.dart # AdMob init, banner creation, interstitial lifecycle (loads at startup, reloads on dismiss)
+  ad_banner_widget.dart  # Conditional export: ad_banner_widget_stub.dart or ad_banner_widget_mobile.dart
+  app_theme.dart     # Dark/light ThemeData (Material 3)
 assets/
   psalms.json        # All 150 psalms with Amharic text (+ Ge'ez/English where available)
 test/
@@ -118,8 +120,8 @@ scripts/
 | `LibrarySearchHub` | main.dart | Full psalm index with search + tag filter |
 | `FavoritesSanctuary` | main.dart | User's bookmarked psalms |
 | `ReadingSanctuary` | main.dart | Verse reader with Amharic/Ge'ez/English toggle |
-| `DivineSettings` | main.dart | Dark mode, font size, + banner ad |
-| `SacredAbout` | main.dart | About screen with app info + banner ad |
+| `DivineSettings` | main.dart | Dark mode, font size |
+| `SacredAbout` | main.dart | About screen |
 | `AppSettings` | main.dart | Static ValueNotifiers: darkMode, fontSize, favoriteIds |
 | `Psalm`, `Verse` | psalm_data.dart | Data models |
 | `PsalmRepository` | psalm_data.dart | Static data access + loading |
@@ -132,10 +134,11 @@ scripts/
 
 - **State:** Simple static `ValueNotifier` singletons in `AppSettings`. No provider/riverpod/state management packages.
 - **Data loading:** `main()` awaits `AdService.initialize()` and `PsalmRepository.loadPsalms()` before `runApp()`.
-- **No backend:** All data is bundled in `assets/psalms.json` (150 psalms, ~2448 verses, fully trilingual). `_generateMissingData()` only runs if the JSON is missing psalms.
+- **No backend:** All data is bundled in `assets/psalms.json` (150 psalms, 3,374 verses). Verse coverage is not yet complete in all three languages — the reader shows "Translation not available" for missing verses. If the asset fails to load, `PsalmRepository.loadError` is set and the app shows a data-error screen rather than fabricating content.
 - **Home screen:** `SanctuaryHome` uses `CustomScrollView` with `SliverAppBar` + `SliverToBoxAdapter` sections. Three prayer sections filter by `tags`: "Morning" (psalms 1-41), "Daylight" (42-119), "Evening" (120-150).
 - **Extensibility:** New screens are added as stateless widgets and registered in `_SacredMainScaffoldState._pages`.
-- **Ad monetization:** `google_mobile_ads` package. Banner ads on Settings + About screens. Interstitial ad shown after every 3 home-screen navigations to other tabs. **No ads in Ge'ez or Amharic reading** (`ReadingSanctuary` with `_lang == "AM"` or `"GE"`). Banner ads shown in English reading mode (`_lang == "EN"`). Replace test ad unit IDs in `ad_service.dart` with real AdMob unit IDs before publishing.
+- **Ad monetization:** `google_mobile_ads` package. **Currently Google's TEST ad unit IDs** (safe to click) — in `lib/ad_service_mobile.dart` and the APPLICATION_ID meta-data in `android/app/src/main/AndroidManifest.xml`. Replace with production unit IDs before publishing. Banner ads appear on Home, Index, Favorites, and English reading mode; interstitial after every 3 home-screen tab switches; in English reading, interstitials at 25%/50%/75% scroll milestones (max 3 per session, font-size independent). **No ads in Ge'ez or Amharic reading.** Interstitials preload in `AdService.initialize()` and reload after each dismiss.
+- **Release signing:** `android/app/build.gradle.kts` loads `android/key.properties` (git-ignored) for the `upload` keystore (`android/upload-keystore.jks`, git-ignored). Falls back to debug signing only when key.properties is missing. Package name is `com.mezmuredawit.app`. Version is `1.0.8+8`.
 
 ---
 
@@ -149,4 +152,5 @@ scripts/
 - If adding a new screen, add it to the `_pages` list in `_SacredMainScaffoldState` and add a navigation destination
 - Run `python scripts/scrape_all_psalms.py && python scripts/merge_psalms.py` to refresh Amharic psalms from wordpocket.com
 - Run `python scripts/scrape_awdemehret.py && python scripts/merge_awdemehret.py` to refresh Ge'ez + English psalms from awdemehret.org
-- Replace test ad unit IDs in `ad_service.dart` with real AdMob unit IDs before publishing
+- Replace Google's test AdMob unit IDs (`lib/ad_service_mobile.dart`) and test APPLICATION_ID (`android/app/src/main/AndroidManifest.xml`) with real IDs before publishing
+- Back up `android/upload-keystore.jks` + `android/key.properties`; losing them prevents future updates

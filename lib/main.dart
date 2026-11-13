@@ -11,9 +11,15 @@ void main() async {
   try {
     await AdService.initialize();
   } catch (_) {}
-  await AppSettings.load();
+  try {
+    await AppSettings.load();
+  } catch (_) {
+    // Defaults remain in effect; the app stays usable without persisted settings.
+  }
   await PsalmRepository.loadPsalms();
-  runApp(const MezmureDawitApp());
+  runApp(PsalmRepository.loadError == null
+      ? const MezmureDawitApp()
+      : const _PsalmLoadErrorApp());
 }
 
 class AppSettings {
@@ -424,8 +430,8 @@ class _SanctuaryHomeState extends State<SanctuaryHome>
                       isDark: isDark,
                     ),
                     const SizedBox(height: 32),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
                       child: AdBannerWidget(),
                     ),
                     const SizedBox(height: 24),
@@ -437,7 +443,7 @@ class _SanctuaryHomeState extends State<SanctuaryHome>
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            "መዝሙረ ዳዊት • Psalms of David • ፫.language",
+                            "መዝሙረ ዳዊት • Psalms of David • Ge'ez · Amharic · English",
                             style: TextStyle(
                               fontSize: 11,
                               color:
@@ -589,14 +595,15 @@ class _HeroSection extends StatelessWidget {
                     children: [
                       _StatBadge(
                         icon: Icons.book_rounded,
-                        label: "150 Psalms",
+                        label: "${PsalmRepository.allPsalms.length} Psalms",
                         colorScheme: colorScheme,
                         isDark: isDark,
                       ),
                       const SizedBox(width: 10),
                       _StatBadge(
                         icon: Icons.format_list_numbered_rounded,
-                        label: "3,374 Verses",
+                        label:
+                            "${PsalmRepository.formatCount(PsalmRepository.totalVerses)} Verses",
                         colorScheme: colorScheme,
                         isDark: isDark,
                       ),
@@ -1538,9 +1545,9 @@ class _LibrarySearchHubState extends State<LibrarySearchHub> {
                 ),
               ),
             ),
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24),
               child: AdBannerWidget(),
             ),
           ),
@@ -1932,9 +1939,9 @@ class FavoritesSanctuary extends StatelessWidget {
               ),
             ),
           ),
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24),
               child: AdBannerWidget(),
             ),
           ),
@@ -2022,8 +2029,8 @@ class _ReadingSanctuaryState extends State<ReadingSanctuary>
     with SingleTickerProviderStateMixin {
   String _lang = "AM";
   final ScrollController _scrollController = ScrollController();
-  int _lastInterstitialVerseIndex = -1;
-  static const int _interstitialEvery = 5;
+  int _verseAdMilestone = 0;
+  static const List<double> _verseAdMilestones = [0.25, 0.5, 0.75];
   late AnimationController _fadeController;
 
   @override
@@ -2050,12 +2057,15 @@ class _ReadingSanctuaryState extends State<ReadingSanctuary>
     if (!AdService.shouldShowVerseInterstitial()) return;
     if (!_scrollController.hasClients) return;
 
-    final extentBefore = _scrollController.position.extentBefore;
-    const estimatedVerseHeight = 130.0;
-    final currentVerseIndex = (extentBefore / estimatedVerseHeight).floor();
+    final position = _scrollController.position;
+    if (position.maxScrollExtent <= 0) return;
 
-    if (currentVerseIndex >= _lastInterstitialVerseIndex + _interstitialEvery) {
-      _lastInterstitialVerseIndex = currentVerseIndex;
+    // Font-size independent milestones: fire at 25% / 50% / 75% of the read.
+    final fraction =
+        (position.extentBefore / position.maxScrollExtent).clamp(0.0, 1.0);
+    while (_verseAdMilestone < _verseAdMilestones.length &&
+        fraction >= _verseAdMilestones[_verseAdMilestone]) {
+      _verseAdMilestone++;
       AdService.showVerseInterstitial();
     }
   }
@@ -2345,8 +2355,8 @@ class _ReadingSanctuaryState extends State<ReadingSanctuary>
             SliverToBoxAdapter(
               child: FadeTransition(
                 opacity: _fadeController,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 12, bottom: 20),
+                child: const Padding(
+                  padding: EdgeInsets.only(top: 12, bottom: 20),
                   child: Center(child: AdBannerWidget()),
                 ),
               ),
@@ -2578,16 +2588,16 @@ class _EnglishAdNotice extends StatelessWidget {
             color: colorScheme.onSurface.withValues(alpha: 0.35),
           ),
           const SizedBox(width: 6),
-          Text(
-            "English Translation",
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface.withValues(alpha: 0.35),
+          Flexible(
+            child: Text(
+              "English Translation",
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface.withValues(alpha: 0.35),
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          const AdBannerWidget(),
         ],
       ),
     );
@@ -3059,7 +3069,7 @@ class SacredAbout extends StatelessWidget {
                   _AboutStatCard(
                     icon: Icons.book_rounded,
                     label: "Total Psalms",
-                    value: "150",
+                    value: "${PsalmRepository.allPsalms.length}",
                     accent: colorScheme.primary,
                     colorScheme: colorScheme,
                     isDark: isDark,
@@ -3068,7 +3078,8 @@ class SacredAbout extends StatelessWidget {
                   _AboutStatCard(
                     icon: Icons.format_list_numbered_rounded,
                     label: "Total Verses",
-                    value: "3,374",
+                    value:
+                        PsalmRepository.formatCount(PsalmRepository.totalVerses),
                     accent: AppTheme.morningAccent,
                     colorScheme: colorScheme,
                     isDark: isDark,
@@ -3189,6 +3200,48 @@ class _AboutStatCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PsalmLoadErrorApp extends StatelessWidget {
+  const _PsalmLoadErrorApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Mezmure Dawit',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
+      home: const Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.cloud_off_rounded, size: 56),
+                  SizedBox(height: 20),
+                  Text(
+                    'Unable to load the psalms',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'The bundled psalm data could not be read. Please reinstall the app or contact support.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, height: 1.6),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

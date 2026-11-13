@@ -12,6 +12,7 @@ class AdBannerWidget extends StatefulWidget {
 class _AdBannerWidgetState extends State<AdBannerWidget> {
   BannerAd? _bannerAd;
   bool _adLoaded = false;
+  bool _bannerRequested = false;
 
   @override
   void initState() {
@@ -21,6 +22,10 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Load at most once per widget instance (didChangeDependencies can fire
+    // multiple times, e.g. on theme/orientation changes).
+    if (_bannerRequested) return;
+    _bannerRequested = true;
     _loadBanner();
   }
 
