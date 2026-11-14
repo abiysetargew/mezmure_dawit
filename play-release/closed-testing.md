@@ -47,6 +47,37 @@ Work through every section — all can use the pre-written answers:
 2. `flutter build appbundle --release`
 3. Promote the closed-testing release (or upload fresh) to production, or submit for review after the 14-day tester requirement
 
+## 7.0. GitHub Pages privacy policy (in this repo)
+
+A ready-to-host policy lives at `docs/privacy.html` (with `.nojekyll`). To go live:
+
+1. Push this repo to GitHub (see step 7.1)
+2. Edit `docs/privacy.html` → replace `REPLACE-WITH-YOUR-CONTACT-EMAIL` with your email
+3. Repo → **Settings → Pages → Build and deployment → Source: Deploy from a branch** → `main` / `/docs` → **Save**
+4. Your policy URL will be `https://<you>.github.io/<repo>/privacy.html` — paste that into the store listing
+
+## 7.1. Wiring CI/CD (already configured for you in `.github/workflows/release.yml`)
+
+One-time setup on GitHub (repo must exist first):
+
+1. Create a **private** GitHub repository (empty, no README) named e.g. `mezmure_dawit`; give me its URL and I will push the current tree
+2. Google Cloud: in the project linked to your Play Console account, create a **service account** (or reuse one) with these roles: *Service Account User* is not required; just create the SA and download its JSON key
+   - Play Console → **Setup → API access** → link an existing Google Cloud project (or create one)
+   - Create service account → grant it **Release manager** (or "Account permissions → Release manager") on the Play Console
+   - Create a JSON key for it
+3. In the GitHub repo → **Settings → Secrets and variables → Actions** add:
+   - `PLAY_STORE_CONFIG` → contents of the service account JSON
+   - `PLAY_KEYSTORE_BASE64` → base64 of `android/upload-keystore.jks` (`base64 -w0 android/upload-keystore.jks` on Linux/WSL, `certutil -encode` or `[Convert]::ToBase64String([IO.File]::ReadAllBytes('android/upload-keystore.jks'))` on Windows PowerShell)
+   - `PLAY_KEYSTORE_PASSWORD` → store password (`android/key.properties`)
+   - `PLAY_KEY_PASSWORD` → key password
+   - `PLAY_KEY_ALIAS` → `upload`
+4. From then on: pushing a tag `release-1.0.8` deploys to **internal testing** automatically; the **Run workflow** button lets you pick `internal` / `alpha` (closed) / `production`
+
+Notes:
+- First Play release for this app must be uploaded **manually** once (Play requires the first AAB to go through the console and Play App Signing enrollment); CI/CD takes over from the second release onward. Actually — the Play Developer API **can** upload the very first release to internal testing; you still must accept "Play App Signing" terms in the console once when creating the app.
+- The service account JSON is a secret — the repo should stay private (it contains a signing-linked key)
+- `key.properties` and `upload-keystore.jks` remain local-only; CI reconstructs them from secrets
+
 ## 7. Auto-deployment (when you're ready to wire it up)
 Plan: GitHub Actions → build AAB → upload AAB to the closed testing track via the Google Play Developer API.
 
