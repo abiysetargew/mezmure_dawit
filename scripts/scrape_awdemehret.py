@@ -8,7 +8,7 @@ Scraper for awdemehret.org - fetches all 150 psalms in 3 languages:
 Each page &pg=N contains ALL 150 psalms as table rows.
 Row N-1 contains Psalm N content (0-indexed).
 """
-import sys, io, json, re, time, urllib.request
+import sys, io, json, re, time, html, urllib.request
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 LANGUAGES = {
@@ -36,16 +36,23 @@ def parse_verses(block):
     texts = []
     for p in paras:
         text = re.sub(r'<[^>]+>', '', p).strip()
+        text = html.unescape(text).strip()
         if text:
             texts.append(text)
     return texts
 
 
 def extract_with_number(text):
-    m = re.match(r'^(\d+)\s+(.*)$', text, re.DOTALL)
+    # Handles "12  ...", "v37 ...", "8-9 ...", "13-14 ..." (combined verse
+    # ranges in the Amharic book). Ranges expand to every verse they cover.
+    m = re.match(r'^(?:v\s*)?(\d+)(?:\s*-\s*(\d+))?\s*[፡።.፦:]*\s*(.*)$', text, re.DOTALL)
     if m:
-        return int(m.group(1)), m.group(2).strip()
-    return None, text
+        first = int(m.group(1))
+        if m.group(2):
+            last = int(m.group(2))
+            return (first, last, m.group(3).strip())
+        return (first, None, m.group(3).strip())
+    return (None, None, text)
 
 
 def scrape_language(lang_code, lang_name, base_url):
@@ -54,15 +61,23 @@ def scrape_language(lang_code, lang_name, base_url):
     print(f"{'='*60}")
 
     url = f"{base_url}&pg=1"
-    html = fetch(url)
-    blocks = get_page_blocks(html)
+    html_text = fetch(url)
+    blocks = get_page_blocks(html_text)
 
     print(f"  Fetched page, got {len(blocks)} blocks (psalms)")
 
     psalms = {}
+    suspicious = []
     for idx, block in enumerate(blocks):
         psalm_num = idx + 1
         texts = parse_verses(block)
+
+        if lang_code == "en":
+            # English paragraphs are unnumbered and the block ends with a
+            # trailing "…Psalm N <superscription>" heading that belongs to
+            # the next psalm — strip it from every paragraph.
+            texts = [re.sub(r'\s*Psalm\s+\d+\b.*$', '', t).strip() for t in texts]
+            texts = [t for t in texts if t]
 
         verses = {}
         if texts:
@@ -71,18 +86,25 @@ def scrape_language(lang_code, lang_name, base_url):
                     verses[i] = text
             else:
                 for text in texts:
-                    vnum, content = extract_with_number(text)
+                    vnum, vend, content = extract_with_number(text)
                     if vnum is not None:
-                        verses[vnum] = content
+                        for n in range(vnum, (vend or vnum) + 1):
+                            verses[n] = content
                     else:
                         if verses:
                             verses[max(verses.keys())] += " " + text
+                            suspicious.append((psalm_num, text[:60]))
                         else:
                             verses[1] = text
 
         psalms[psalm_num] = verses
         if psalm_num <= 3 or (psalm_num <= 10 and len(verses) > 0):
             print(f"  Psalm {psalm_num}: {len(verses)} verses")
+
+    if suspicious:
+        print(f"  WARNING: {len(suspicious)} unnumbered paragraphs merged into previous verse:")
+        for psalm, snippet in suspicious:
+            print(f"    psalm {psalm}: {snippet}")
 
     return psalms
 
