@@ -28,4 +28,4 @@ The app is not directed at children under 13 and does not knowingly collect data
 Material changes will be posted on the store listing.
 
 ## Contact
-**<your name / organization>** — **<your email>** — **<your website>**
+**Abiy Setargew** — **abiysetargewkenaw@gmail.com**
